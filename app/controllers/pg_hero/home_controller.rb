@@ -3,8 +3,8 @@ module PgHero
     layout "pg_hero/application"
 
     protect_from_forgery
-
-    http_basic_authenticate_with name: ENV["PGHERO_USERNAME"], password: ENV["PGHERO_PASSWORD"] if ENV["PGHERO_PASSWORD"]
+    include AdminAuthenticatable
+    #http_basic_authenticate_with name: ENV["PGHERO_USERNAME"], password: ENV["PGHERO_PASSWORD"] if ENV["PGHERO_PASSWORD"]
 
     if respond_to?(:before_action)
       before_action :check_api
