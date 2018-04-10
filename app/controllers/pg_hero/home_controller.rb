@@ -196,6 +196,8 @@ module PgHero
 
       if @duration / @period > 1440
         render_text "Too many data points"
+      elsif @period % 60 != 0
+        render_text "Period must be a multiple of 60"
       end
     end
 
@@ -245,6 +247,10 @@ module PgHero
           @visualize = params[:commit] == "Visualize"
         rescue ActiveRecord::StatementInvalid => e
           @error = e.message
+
+          if @error.include?("bind message supplies 0 parameters")
+            @error = "Can't explain queries with bind parameters"
+          end
         end
       end
     end

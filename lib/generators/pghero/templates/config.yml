@@ -15,6 +15,9 @@ databases:
     # Minimum connections for high connections warning
     # total_connections_threshold: 100
 
+    # Statement timeout for explain
+    # explain_timeout_sec: 10
+
   # Add more databases
   # other:
   #   url: <%= ENV["OTHER_DATABASE_URL"] %>

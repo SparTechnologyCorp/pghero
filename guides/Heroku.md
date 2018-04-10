@@ -94,3 +94,9 @@ Minimum connections for high connections warning
 ```sh
 heroku config:set PGHERO_TOTAL_CONNECTIONS_THRESHOLD=100 # default
 ```
+
+Statement timeout for explain
+
+```sh
+heroku config:set PGHERO_EXPLAIN_TIMEOUT_SEC=10 # default
+````

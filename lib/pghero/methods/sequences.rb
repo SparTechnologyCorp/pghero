@@ -28,9 +28,10 @@ module PgHero
 
         # parse out sequence
         sequences.each do |column|
-          m = /^nextval\('(.+)'\:\:regclass\)$/.match(column.delete(:default_value))
-          column[:schema], column[:sequence] = unquote_ident(m[1])
           column[:max_value] = column[:column_type] == 'integer' ? 2147483647 : 9223372036854775807
+
+          column[:schema], column[:sequence] = parse_default_value(column[:default_value])
+          column.delete(:default_value) if column[:sequence]
         end
 
         add_sequence_attributes(sequences)
@@ -48,6 +49,19 @@ module PgHero
       end
 
       private
+
+      # can parse
+      # nextval('id_seq'::regclass)
+      # nextval(('id_seq'::text)::regclass)
+      def parse_default_value(default_value)
+        m = /^nextval\('(.+)'\:\:regclass\)$/.match(default_value)
+        m = /^nextval\(\('(.+)'\:\:text\)\:\:regclass\)$/.match(default_value) unless m
+        if m
+          unquote_ident(m[1])
+        else
+          []
+        end
+      end
 
       def unquote_ident(value)
         schema, seq = value.split(".")
@@ -77,22 +91,18 @@ module PgHero
         SQL
 
         # first populate missing schemas
-        missing_schema = sequences.select { |s| s[:schema].nil? }
+        missing_schema = sequences.select { |s| s[:schema].nil? && s[:sequence] }
         if missing_schema.any?
           sequence_schemas = sequence_attributes.group_by { |s| s[:sequence] }
 
           missing_schema.each do |sequence|
             schemas = sequence_schemas[sequence[:sequence]] || []
 
-            case schemas.size
-            when 0
-              # do nothing, will be marked as unreadable
-            when 1
-              # bingo
+            if schemas.size == 1
               sequence[:schema] = schemas[0][:schema]
-            else
-              raise PgHero::Error, "Same sequence name in multiple schemas: #{sequence[:sequence]}"
             end
+            # otherwise, do nothing, will be marked as unreadable
+            # TODO better message for multiple schemas
           end
         end
 
